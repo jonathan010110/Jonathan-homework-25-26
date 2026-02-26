@@ -1,0 +1,39 @@
+#chess-board {
+  font-size: 0.75rem;
+}
+
+
+
+.square {
+  width: 20px;
+  height: 20px;
+}
+
+.row-label {
+  width: 40px;
+  height: 20px;
+  text-align: right;
+  margin-right: 5px;
+  display: flex; 
+  align-items: center; 
+  justify-content: flex-end;
+}
+
+.board-row,
+.column-labels {
+  display: flex;
+  flex-direction: row;
+}
+
+.column-label {
+  width: 20px;
+  height: 20px;
+  text-align: center;
+
+}
+.square.light {
+  background-color: #f0d9b5;
+}
+.square.dark {
+  background-color: #61340f;
+}

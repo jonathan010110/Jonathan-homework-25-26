@@ -1,0 +1,36 @@
+body {
+    background-color: rgb(79, 152, 235);
+}
+ 
+img {
+    margin-left: 100px;
+    margin-top: 100px;
+}
+ 
+img2{
+    margin-left: 100px;
+}
+
+#firstDiv {
+    position: relative;
+    margin: -90px;
+    margin-left: 200px;
+    margin-right: 850px;
+    background-color: white;
+    
+
+}
+make
+
+.makeItGray{
+    color: gray;
+}
+
+#secondDiv {
+    position: relative;
+    margin-top: 90px;
+    margin-left: 250px;
+    margin-right: 900px;
+    background-color: white;
+
+}
