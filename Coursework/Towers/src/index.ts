@@ -2,11 +2,22 @@ import './style.css';
 
 const DISK_COUNT = 4;
 const INITIAL_STACKS: number[][] = [[4, 3, 2, 1], [], []];
+const TOWER_INDICES = [0, 1, 2] as const;
 
 let stacks: number[][] = INITIAL_STACKS.map((tower) => [...tower]);
 let selectedTower: number | null = null;
 let moveCount = 0;
 let clearMessageTimeout: number | null = null;
+
+function getById<T extends HTMLElement>(id: string): T {
+    const element = document.getElementById(id);
+
+    if (!element) {
+        throw new Error(`Element not found: ${id}`);
+    }
+
+    return element as T;
+}
 
 function getTower(index: number): number[] {
     const tower = stacks[index];
@@ -18,49 +29,12 @@ function getTower(index: number): number[] {
     return tower;
 }
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-    <main class="game">
-        <header class="topbar">
-            <button id="reset" class="rect-btn reset-btn" type="button">Reset</button>
-            <div id="move-counter" class="move-counter">Plays</div>
-        </header>
-
-        <p id="message" class="message" aria-live="polite"></p>
-
-        <section class="board" aria-label="Tower of Hanoi board">
-            <div class="towers-container">
-                ${[0, 1, 2]
-                    .map(
-                        (index) => `
-                            <div class="tower-col">
-                                <div class="tower" data-tower="${index}">
-                                    <div class="disk-stack" data-stack="${index}"></div>
-                                    <div class="rod"></div>
-                                </div>
-                            </div>
-                        `
-                    )
-                    .join('')}
-                <div class="base-line"></div>
-            </div>
-
-            <div class="buttons-container">
-                ${[0, 1, 2]
-                    .map(
-                        (index) => `
-                            <button class="rect-btn tower-btn" data-select="${index}" type="button">${index + 1}</button>
-                        `
-                    )
-                    .join('')}
-            </div>
-        </section>
-    </main>
-`;
-
-const messageEl = document.getElementById('message') as HTMLParagraphElement;
-const moveCounterEl = document.getElementById('move-counter') as HTMLDivElement;
-const resetButton = document.getElementById('reset') as HTMLButtonElement;
-const towerButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.tower-btn'));
+const messageEl = getById<HTMLParagraphElement>('message');
+const moveCounterEl = getById<HTMLDivElement>('move-counter');
+const resetButton = getById<HTMLButtonElement>('reset');
+const towerButtons = TOWER_INDICES.map((index) => getById<HTMLButtonElement>(`tower-btn-${index}`));
+const towerElements = TOWER_INDICES.map((index) => getById<HTMLDivElement>(`tower-${index}`));
+const stackElements = TOWER_INDICES.map((index) => getById<HTMLDivElement>(`disk-stack-${index}`));
 
 function showMessage(text: string, cssClass = '', autoClear = true): void {
     messageEl.textContent = text;
@@ -93,14 +67,10 @@ function canMove(from: number, to: number): boolean {
 }
 
 function renderStacks(highlightTower: number | null = null): void {
-    for (let towerIndex = 0; towerIndex < 3; towerIndex += 1) {
+    for (const towerIndex of TOWER_INDICES) {
         const towerStack = getTower(towerIndex);
-        const stackEl = document.querySelector<HTMLDivElement>(`.disk-stack[data-stack="${towerIndex}"]`);
-        const towerEl = document.querySelector<HTMLDivElement>(`.tower[data-tower="${towerIndex}"]`);
-
-        if (!stackEl || !towerEl) {
-            continue;
-        }
+        const stackEl = stackElements[towerIndex]!;
+        const towerEl = towerElements[towerIndex]!;
 
         stackEl.innerHTML = '';
         towerEl.classList.toggle('selected', selectedTower === towerIndex);
