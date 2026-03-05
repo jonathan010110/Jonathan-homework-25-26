@@ -32,4 +32,7 @@
 
 ## Akzentfarbe (Buttons / Fehler)
 - **#EF4444**  
-  → Für Reset-Button, Fehlermeldungen oder Move-Counter.
+  → Für Reset-Button, Fehlermeldungen.
+
+## Movebutton (bewegung)
+- **E7FEFF**
