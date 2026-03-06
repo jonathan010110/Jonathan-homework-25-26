@@ -1,173 +1,231 @@
 import './style.css';
 
 const DISK_COUNT = 4;
-const INITIAL_STACKS: number[][] = [[4, 3, 2, 1], [], []];
-const TOWER_INDICES = [0, 1, 2] as const;
 
-let stacks: number[][] = INITIAL_STACKS.map((tower) => [...tower]);
+let towers: number[][] = [];
 let selectedTower: number | null = null;
-let moveCount = 0;
-let clearMessageTimeout: number | null = null;
 
-function getById<T extends HTMLElement>(id: string): T {
+function byId<T extends HTMLElement>(id: string): T {
     const element = document.getElementById(id);
 
     if (!element) {
-        throw new Error(`Element not found: ${id}`);
+        throw new Error(`Missing element: ${id}`);
     }
 
     return element as T;
 }
 
-function getTower(index: number): number[] {
-    const tower = stacks[index];
+function createInitialTowers(): number[][] {
+    const firstTower: number[] = [];
 
-    if (!tower) {
-        throw new Error(`Tower index out of bounds: ${index}`);
+    for (let size = DISK_COUNT; size >= 1; size -= 1) {
+        firstTower.push(size);
     }
 
-    return tower;
+    return [firstTower, [], []];
 }
 
-const messageEl = getById<HTMLParagraphElement>('message');
-const moveCounterEl = getById<HTMLDivElement>('move-counter');
-const resetButton = getById<HTMLButtonElement>('reset');
-const towerButtons = TOWER_INDICES.map((index) => getById<HTMLButtonElement>(`tower-btn-${index}`));
-const towerElements = TOWER_INDICES.map((index) => getById<HTMLDivElement>(`tower-${index}`));
-const stackElements = TOWER_INDICES.map((index) => getById<HTMLDivElement>(`disk-stack-${index}`));
+function createDiv(className: string, id?: string): HTMLDivElement {
+    const element = document.createElement('div');
+    element.className = className;
 
-function showMessage(text: string, cssClass = '', autoClear = true): void {
-    messageEl.textContent = text;
-    messageEl.className = `message ${cssClass}`.trim();
-
-    if (clearMessageTimeout !== null) {
-        window.clearTimeout(clearMessageTimeout);
+    if (id) {
+        element.id = id;
     }
 
-    if (autoClear) {
-        clearMessageTimeout = window.setTimeout(() => {
-            messageEl.textContent = '';
-            messageEl.className = 'message';
-        }, 1400);
+    return element;
+}
+
+function createTowerColumn(index: number): HTMLDivElement {
+    const towerColumn = createDiv('tower-column');
+    const tower = createDiv('tower', `tower-${index}`);
+    const diskStack = createDiv('disk-stack', `disk-stack-${index}`);
+    const rod = createDiv('rod');
+
+    tower.appendChild(diskStack);
+    tower.appendChild(rod);
+    towerColumn.appendChild(tower);
+
+    return towerColumn;
+}
+
+function createTowerButton(index: number): HTMLButtonElement {
+    const button = document.createElement('button');
+    button.id = `tower-button-${index}`;
+    button.className = 'rect-btn tower-btn';
+    button.type = 'button';
+    button.dataset.tower = String(index);
+    button.textContent = String(index + 1);
+
+    return button;
+}
+
+function buildDom(): void {
+    const app = byId<HTMLDivElement>('app');
+    const game = document.createElement('main');
+    game.className = 'game';
+
+    const topbar = document.createElement('header');
+    topbar.className = 'topbar';
+
+    const resetButton = document.createElement('button');
+    resetButton.id = 'reset-button';
+    resetButton.className = 'rect-btn reset-btn';
+    resetButton.type = 'button';
+    resetButton.textContent = 'Reset';
+
+    topbar.appendChild(resetButton);
+
+    const board = document.createElement('section');
+    board.className = 'board';
+    board.setAttribute('aria-label', 'Three towers');
+
+    const towersContainer = createDiv('towers-container');
+
+    for (let i = 0; i < 3; i += 1) {
+        towersContainer.appendChild(createTowerColumn(i));
+    }
+
+    towersContainer.appendChild(createDiv('base-line'));
+
+    const towerButtons = createDiv('tower-buttons');
+
+    for (let i = 0; i < 3; i += 1) {
+        towerButtons.appendChild(createTowerButton(i));
+    }
+
+    board.appendChild(towersContainer); 
+    board.appendChild(towerButtons);
+
+    game.appendChild(topbar);
+        game.appendChild(board);
+
+    app.replaceChildren(game);
+}
+
+function renderTowers(): void {
+    for (let towerIndex = 0; towerIndex < 3; towerIndex += 1) {
+        const stackEl = byId<HTMLDivElement>(`disk-stack-${towerIndex}`);
+        stackEl.replaceChildren();
+
+        const stack = towers[towerIndex] ?? [];
+
+        // Render in reverse so the largest disk is visually at the bottom.
+        for (let i = stack.length - 1; i >= 0; i -= 1) {
+            const size = stack[i];
+            const disk = document.createElement('div');
+
+            disk.className = `disk disk-size-${size}`;
+            stackEl.appendChild(disk);
+        }
+
+        const towerEl = byId<HTMLDivElement>(`tower-${towerIndex}`);
+        towerEl.classList.toggle('selected', selectedTower === towerIndex);
     }
 }
 
 function canMove(from: number, to: number): boolean {
-    const fromStack = getTower(from);
-    const toStack = getTower(to);
+    const fromTower = towers[from];
+    const toTower = towers[to];
 
-    if (fromStack.length === 0) {
+    if (!fromTower || !toTower) {
         return false;
     }
 
-    const movingDisk = fromStack[fromStack.length - 1]!;
-    const targetDisk = toStack[toStack.length - 1];
+    const movingDisk = fromTower[fromTower.length - 1];
+    const targetDisk = toTower[toTower.length - 1];
 
-    return targetDisk === undefined || movingDisk < targetDisk;
-}
-
-function renderStacks(highlightTower: number | null = null): void {
-    for (const towerIndex of TOWER_INDICES) {
-        const towerStack = getTower(towerIndex);
-        const stackEl = stackElements[towerIndex]!;
-        const towerEl = towerElements[towerIndex]!;
-
-        stackEl.innerHTML = '';
-        towerEl.classList.toggle('selected', selectedTower === towerIndex);
-
-        // Render disks in reverse order (largest bottom, smallest top)
-        for (let i = towerStack.length - 1; i >= 0; i -= 1) {
-            const diskSize = towerStack[i];
-            
-            const disk = document.createElement('div');
-            disk.className = 'disk';
-            disk.setAttribute('data-size', String(diskSize));
-
-            if (highlightTower === towerIndex && i === towerStack.length - 1) {
-                disk.classList.add('moved-disk');
-            }
-
-            stackEl.appendChild(disk);
-        }
+    if (movingDisk === undefined) {
+        return false;
     }
 
-    moveCounterEl.textContent = `Plays`;
-}
-
-function checkWin(): void {
-    if (getTower(2).length === DISK_COUNT) {
-        showMessage(`You have won with a total of ${moveCount}`, 'win-message', false);
-        towerButtons.forEach((button) => {
-            button.disabled = true;
-        });
+    if (targetDisk === undefined) {
+        return true;
     }
+
+    return movingDisk < targetDisk;
 }
 
 function moveDisk(from: number, to: number): void {
-    if (!canMove(from, to)) {
-        showMessage('This move is not allowed', 'error-message');
-        selectedTower = null;
-        renderStacks();
+    const fromTower = towers[from];
+    const toTower = towers[to];
+
+    if (!fromTower || !toTower) {
         return;
     }
 
-    const fromStack = getTower(from);
-    const toStack = getTower(to);
-    const disk = fromStack.pop();
+    if (!canMove(from, to)) {
+        selectedTower = null;
+        renderTowers();
+        return;
+    }
+
+    const disk = fromTower.pop();
 
     if (disk === undefined) {
         return;
     }
 
-    toStack.push(disk);
-    moveCount += 1;
+    toTower.push(disk);
     selectedTower = null;
 
-    renderStacks(to);
-    checkWin();
+    renderTowers();
 }
 
-function handleTowerSelection(towerIndex: number): void {
+function handleTowerSelect(towerIndex: number): void {
     if (selectedTower === null) {
         selectedTower = towerIndex;
-        renderStacks();
+        renderTowers();
         return;
     }
 
     if (selectedTower === towerIndex) {
         selectedTower = null;
-        renderStacks();
+        renderTowers();
         return;
     }
 
     moveDisk(selectedTower, towerIndex);
 }
 
-function resetGame(): void {
-    stacks = INITIAL_STACKS.map((tower) => [...tower]);
-    selectedTower = null;
-    moveCount = 0;
-    showMessage('', '', false);
+function handleTowerButtonClick(event: MouseEvent): void {
+    const button = event.currentTarget as HTMLButtonElement | null;
 
-    towerButtons.forEach((button) => {
-        button.disabled = false;
-    });
+    if (!button) {
+        return;
+    }
 
-    renderStacks();
+    const value = button.dataset.tower;
+
+    if (value === undefined) {
+        return;
+    }
+
+    handleTowerSelect(Number(value));
 }
 
-towerButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-        const value = button.dataset.select;
+function resetGame(): void {
+    towers = createInitialTowers();
+    selectedTower = null;
+    renderTowers();
+}
 
-        if (value === undefined) {
-            return;
-        }
+function bindEvents(): void {
+    const resetButton = byId<HTMLButtonElement>('reset-button');
 
-        handleTowerSelection(Number(value));
-    });
-});
+    for (let i = 0; i < 3; i += 1) {
+        const button = byId<HTMLButtonElement>(`tower-button-${i}`);
+        button.addEventListener('click', handleTowerButtonClick);
+    }
 
-resetButton.addEventListener('click', resetGame);
+    resetButton.addEventListener('click', resetGame);
+}
 
-renderStacks();
+function init(): void {
+    buildDom();
+    towers = createInitialTowers();
+    renderTowers();
+    bindEvents();
+}
+
+init();

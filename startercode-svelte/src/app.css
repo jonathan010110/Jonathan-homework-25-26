@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+:root {
+  --bg-top: #e2c39b;
+  --bg-mid: #b6785f;
+  --bg-bottom: #6f2929;
+  --text-main: #f7e8d9;
+  --text-soft: rgba(246, 225, 205, 0.78);
+  --text-faint: rgba(240, 214, 189, 0.6);
+  --glass-fill: linear-gradient(140deg, rgba(255, 233, 209, 0.16), rgba(139, 63, 58, 0.24));
+  --glass-border: rgba(249, 231, 213, 0.34);
+  --ring-track: rgba(244, 220, 197, 0.34);
+  --frame-shadow: 0 18px 46px rgba(38, 7, 8, 0.35);
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  background: radial-gradient(circle at 20% 12%, #efd6ba 0%, rgba(239, 214, 186, 0.45) 25%, transparent 45%),
+    linear-gradient(160deg, var(--bg-top) 0%, var(--bg-mid) 50%, var(--bg-bottom) 100%);
+  color: var(--text-main);
+  overflow-x: hidden;
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer components {
+  .phone-frame {
+    width: min(390px, 100vw);
+    height: 844px;
+    margin-inline: auto;
+    border-radius: 24px;
+    border: 1px solid rgba(246, 224, 200, 0.48);
+    background: linear-gradient(180deg, rgba(228, 194, 153, 0.97) 0%, rgba(122, 48, 44, 0.95) 100%);
+    box-shadow: var(--frame-shadow);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .phone-frame::before {
+    content: "";
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    right: -120px;
+    top: -70px;
+    background: radial-gradient(circle, rgba(255, 235, 210, 0.18), transparent 72%);
+    pointer-events: none;
+  }
+
+  .phone-frame::after {
+    content: "";
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    left: -155px;
+    bottom: -130px;
+    border: 1px solid rgba(245, 219, 195, 0.12);
+    pointer-events: none;
+  }
+
+  .glass-card {
+    border-radius: 24px;
+    background: var(--glass-fill);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 10px 22px rgba(39, 8, 9, 0.2);
+  }
+
+  .glass-button {
+    border-radius: 999px;
+    border: 1px solid rgba(248, 230, 213, 0.36);
+    background: linear-gradient(130deg, rgba(255, 241, 226, 0.14), rgba(136, 58, 52, 0.24));
+    color: var(--text-main);
+    backdrop-filter: blur(10px);
+    box-shadow: inset 0 0 0 1px rgba(255, 248, 240, 0.1), 0 7px 14px rgba(44, 10, 10, 0.24);
+    transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+  }
+
+  .glass-button:hover {
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 0 1px rgba(255, 251, 246, 0.2), 0 10px 20px rgba(46, 10, 10, 0.28);
+  }
+
+  .glass-button:active {
+    transform: translateY(0);
+  }
+
+  .screen-enter {
+    animation: riseIn 320ms ease both;
+  }
+
+  .screen-shell {
+    height: 100%;
+    padding: 22px 18px;
+    position: relative;
+  }
+
+  .screen-title {
+    font-size: 34px;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #5a1f24;
+  }
+
+  .screen-subtle {
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--text-faint);
+    letter-spacing: 0.02em;
+  }
+
+  .mini-profile {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(245, 227, 210, 0.55);
+    background: rgba(255, 239, 221, 0.18);
+    display: grid;
+    place-items: center;
+    color: rgba(100, 52, 66, 0.9);
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  .warm-pill {
+    border-radius: 999px;
+    border: 1px solid rgba(249, 228, 207, 0.42);
+    background: linear-gradient(130deg, rgba(255, 240, 223, 0.16), rgba(129, 57, 49, 0.24));
+    color: rgba(244, 228, 212, 0.95);
+    font-size: 10px;
+    font-weight: 500;
+  }
+}
+
+@media (max-width: 430px) {
+  .phone-frame {
+    height: 100vh;
+    border-radius: 0;
+    border-inline: none;
+  }
+}
